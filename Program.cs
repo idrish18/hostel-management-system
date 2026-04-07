@@ -82,8 +82,11 @@ builder.Services.AddLogging(config =>
 });
 
 // ============= API DOCUMENTATION (SWAGGER) =============
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+}
 
 // ============= CONTROLLERS =============
 builder.Services.AddControllers();

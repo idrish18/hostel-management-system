@@ -88,9 +88,6 @@ services:
     ports:
       - "${APP_PORT_HTTP:-5000}:5000"
       - "${APP_PORT_HTTPS:-5001}:5001"
-    volumes:
-      # Live code reloading for development (optional)
-      - ./:/app
     networks:
       - smarthostel-network
     healthcheck:
@@ -106,35 +103,10 @@ services:
         max-file: "5"
 
   # ============= PGADMIN (DATABASE MANAGEMENT UI) =============
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: smarthostel-pgadmin
-    restart: unless-stopped
-    depends_on:
-      - postgres
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@smarthostel.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-AdminPassword123!}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - smarthostel-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
 volumes:
   postgres_data:
     driver: local
   redis_data:
-    driver: local
-  pgadmin_data:
     driver: local
 
 networks:

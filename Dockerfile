@@ -2,7 +2,8 @@
 # Multi-stage build for optimized production image
 
 # ============= BUILD STAGE =============
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG DOTNET_VERSION=10.0
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 
 WORKDIR /src
 
@@ -25,7 +26,8 @@ FROM build AS publish
 RUN dotnet publish "new hms.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # ============= RUNTIME STAGE =============
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+ARG DOTNET_VERSION=10.0
+FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION} AS runtime
 
 WORKDIR /app
 
