@@ -73,7 +73,7 @@ services:
       
       # ASP.NET Core
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-      ASPNETCORE_URLS: http://+:5000;https://+:5001
+      ASPNETCORE_URLS: http://+:5000
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
       
       # JWT Configuration
@@ -87,7 +87,6 @@ services:
       Logging__LogLevel__Microsoft.AspNetCore: ${LOG_LEVEL_ASPNET:-Warning}
     ports:
       - "${APP_PORT_HTTP:-5000}:5000"
-      - "${APP_PORT_HTTPS:-5001}:5001"
     networks:
       - smarthostel-network
     healthcheck:

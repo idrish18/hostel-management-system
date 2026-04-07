@@ -155,7 +155,13 @@ if (app.Environment.IsDevelopment())
 
 // ============= MIDDLEWARE =============
 app.UseExceptionMiddleware();
-app.UseHttpsRedirection();
+
+// Only enforce HTTPS in Development (Docker uses HTTP)
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
