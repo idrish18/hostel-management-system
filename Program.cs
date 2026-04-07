@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +8,7 @@ using SmartHostelManagementSystem.Middleware;
 using SmartHostelManagementSystem.Models.Entities;
 using SmartHostelManagementSystem.Services.Implementations;
 using SmartHostelManagementSystem.Services.Interfaces;
+using StackExchange.Redis;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +54,22 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// ============= DATA PROTECTION CONFIGURATION (for Docker/Containers) =============
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+{
+    var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    var redis = ConnectionMultiplexer.Connect(redisConnection);
+    builder.Services.AddDataProtection()
+        .SetApplicationName("SmartHostelManagementSystem")
+        .PersistKeysToStackExchangeRedis(redis, new RedisKey("HostelSystem:DataProtection:Keys"));
+}
+else
+{
+    // Development: use temporary directory or memory-based protection
+    builder.Services.AddDataProtection()
+        .SetApplicationName("SmartHostelManagementSystem");
+}
+
 // ============= CORS CONFIGURATION =============
 builder.Services.AddCors(options =>
 {
@@ -73,6 +91,13 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 // ============= SERVICE REGISTRATION =============
 builder.Services.AddScoped<ICacheService, CacheService>();
+builder.Services.AddScoped<IHostelService, HostelService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IComplaintService, ComplaintService>();
+builder.Services.AddScoped<IFeeService, FeeService>();
+builder.Services.AddScoped<ICleaningService, CleaningService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // ============= LOGGING CONFIGURATION =============
 builder.Services.AddLogging(config =>

@@ -68,7 +68,7 @@ services:
         condition: service_healthy
     environment:
       # Connection Strings
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${DB_NAME:-SmartHostelDB};Username=${DB_USER:-postgres};Password=${DB_PASSWORD:-SecurePassword123!};"
+      ConnectionStrings__DefaultConnection: "Server=postgres;Port=5432;Database=${DB_NAME:-SmartHostelDB};User Id=${DB_USER:-postgres};Password=${DB_PASSWORD:-SecurePassword123!};SslMode=Disable;"
       ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD:-RedisSecure123!}"
       
       # ASP.NET Core
