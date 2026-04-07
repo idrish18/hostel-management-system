@@ -1,0 +1,142 @@
+version: '3.9'
+
+services:
+  # ============= POSTGRESQL DATABASE =============
+  postgres:
+    image: postgres:16-alpine
+    container_name: smarthostel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-SmartHostelDB}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-SecurePassword123!}
+      TZ: UTC
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+      # Initialize database with migrations
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - smarthostel-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============= REDIS CACHE =============
+  redis:
+    image: redis:7-alpine
+    container_name: smarthostel-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smarthostel-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-RedisSecure123!}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============= .NET APPLICATION =============
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarthostel-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Connection Strings
+      ConnectionStrings__DefaultConnection: "Server=postgres;Port=5432;Database=${DB_NAME:-SmartHostelDB};User Id=${DB_USER:-postgres};Password=${DB_PASSWORD:-SecurePassword123!};Encrypt=false;TrustServerCertificate=false;"
+      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD:-RedisSecure123!}"
+      
+      # ASP.NET Core
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:5000;https://+:5001
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      
+      # JWT Configuration
+      Jwt__SecretKey: ${JWT_SECRET_KEY:-your-production-secret-key-minimum-32-characters-required}
+      Jwt__Issuer: ${JWT_ISSUER:-SmartHostelAPI}
+      Jwt__Audience: ${JWT_AUDIENCE:-SmartHostelClient}
+      Jwt__ExpiresInHours: ${JWT_EXPIRES_HOURS:-24}
+      
+      # Logging
+      Logging__LogLevel__Default: ${LOG_LEVEL:-Information}
+      Logging__LogLevel__Microsoft.AspNetCore: ${LOG_LEVEL_ASPNET:-Warning}
+    ports:
+      - "${APP_PORT_HTTP:-5000}:5000"
+      - "${APP_PORT_HTTPS:-5001}:5001"
+    volumes:
+      # Live code reloading for development (optional)
+      - ./:/app
+    networks:
+      - smarthostel-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ============= PGADMIN (DATABASE MANAGEMENT UI) =============
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: smarthostel-pgadmin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@smarthostel.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-AdminPassword123!}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - smarthostel-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  smarthostel-network:
+    driver: bridge

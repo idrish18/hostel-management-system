@@ -1,0 +1,57 @@
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode/
+.vs/
+*.user
+*.suo
+*.sln.docstates
+.idea/
+
+# Build output
+bin/
+obj/
+publish/
+.dotnet/
+
+# Dependencies
+packages/
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (don't copy these into container)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+*.md
+docs/
+
+# Test files
+*.Tests/
+.Test/
+
+# Local development
+.env
+.env.local
+appsettings.Development.json
+
+# Database files
+*.db
+*.sqlite
+
+# Temporary files
+temp/
+tmp/
+*.tmp
