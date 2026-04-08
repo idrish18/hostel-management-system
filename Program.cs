@@ -11,6 +11,7 @@ using SmartHostelManagementSystem.Services.Interfaces;
 using StackExchange.Redis;
 using System.Text;
 
+// Create the WebApplicationBuilder
 var builder = WebApplication.CreateBuilder(args);
 
 // ============= DATABASE CONFIGURATION =============
@@ -96,7 +97,6 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<IComplaintService, ComplaintService>();
 builder.Services.AddScoped<IFeeService, FeeService>();
-builder.Services.AddScoped<ICleaningService, CleaningService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // ============= LOGGING CONFIGURATION =============
@@ -150,6 +150,9 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Smart Hostel Management System API v1");
         options.RoutePrefix = string.Empty;
+        
+        // Inject custom JavaScript to add Bearer token support
+        options.InjectJavascript("/swagger-bearer-token.js", "text/javascript");
     });
 }
 

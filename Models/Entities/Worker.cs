@@ -35,5 +35,4 @@ public class Worker
     // Navigation properties
     public virtual ApplicationUser? User { get; set; }
     public virtual Hostel? Hostel { get; set; }
-    public virtual ICollection<CleaningRecord> CleaningRecords { get; set; } = new List<CleaningRecord>();
 }

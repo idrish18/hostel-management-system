@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Swagger UI - Hostel Management System</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+<script>
+    window.onload = function() {
+        // Configure Swagger UI
+        const ui = SwaggerUIBundle({
+            url: "/swagger/v1/swagger.json",
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+                SwaggerUIBundle.SwaggerUIStandalonePreset
+            ],
+            plugins: [
+                SwaggerUIBundle.plugins.DownloadUrl
+            ],
+            layout: "StandaloneLayout",
+            onComplete: function() {
+                // Add authorization configuration after UI loads
+                addBearerTokenAuthorization();
+            }
+        });
+
+        function addBearerTokenAuthorization() {
+            // Add bearer token input to topbar
+            const topbar = document.querySelector('.topbar');
+            if (!topbar) return;
+
+            const authContainer = document.createElement('div');
+            authContainer.style.cssText = 'padding: 10px; background: #f9f9f9; border-bottom: 1px solid #ddd;';
+            
+            const label = document.createElement('label');
+            label.style.cssText = 'display: block; font-weight: bold; margin-bottom: 5px;';
+            label.textContent = 'JWT Bearer Token:';
+            
+            const input = document.createElement('input');
+            input.type = 'password';
+            input.id = 'bearerTokenInput';
+            input.placeholder = 'Enter your JWT token here...';
+            input.style.cssText = 'width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;';
+            
+            const button = document.createElement('button');
+            button.textContent = 'Set Bearer Token';
+            button.style.cssText = 'padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;';
+            button.onclick = function() {
+                const token = input.value.trim();
+                if (token) {
+                    // Set the authorization header for all requests
+                    ui.setScheme('bearer');
+                    const authorizations = ui.authSelectors;
+                    if (authorizations && authorizations.http) {
+                        authorizations.http.credentials = {
+                            scheme: "Bearer",
+                            value: token
+                        };
+                    }
+                    
+                    // Alternatively, inject Authorization header in request interceptor
+                    window.bearerToken = token;
+                    alert('✓ Bearer token set successfully!');
+                } else {
+                    alert('Please enter a valid token');
+                }
+            };
+
+            const clearButton = document.createElement('button');
+            clearButton.textContent = 'Clear Token';
+            clearButton.style.cssText = 'padding: 8px 15px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;';
+            clearButton.onclick = function() {
+                input.value = '';
+                delete window.bearerToken;
+                alert('Token cleared');
+            };
+
+            const info = document.createElement('p');
+            info.style.cssText = 'margin: 10px 0; font-size: 12px; color: #666;';
+            info.innerHTML = '<strong>Quick Start:</strong> Login with <code>admin@hms.com</code> / <code>Admin@123</code> at <code>POST /api/auth/login</code> to get your token.';
+
+            authContainer.appendChild(label);
+            authContainer.appendChild(input);
+            authContainer.appendChild(button);
+            authContainer.appendChild(clearButton);
+            authContainer.appendChild(info);
+
+            // Insert before swagger-ui content
+            const swaggerContainer = document.querySelector('#swagger-ui');
+            if (swaggerContainer) {
+                swaggerContainer.parentNode.insertBefore(authContainer, swaggerContainer);
+            }
+
+            // Intercept all fetch requests to add bearer token
+            const originalFetch = window.fetch;
+            window.fetch = function(...args) {
+                if (window.bearerToken && (!args[1] || !args[1].headers)) {
+                    if (!args[1]) args[1] = {};
+                    if (!args[1].headers) args[1].headers = {};
+                    args[1].headers['Authorization'] = `Bearer ${window.bearerToken}`;
+                } else if (window.bearerToken && args[1] && args[1].headers) {
+                    args[1].headers['Authorization'] = `Bearer ${window.bearerToken}`;
+                }
+                return originalFetch(...args);
+            };
+        }
+
+        window.ui = ui;
+    }
+</script>
+</body>
+</html>

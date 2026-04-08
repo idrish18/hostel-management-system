@@ -94,6 +94,10 @@ public class AuthController : ControllerBase
             if (!ModelState.IsValid)
                 return BadRequest(new { success = false, errors = ModelState.Values.SelectMany(v => v.Errors) });
 
+            // Validate hostel exists
+            if (request.HostelId <= 0)
+                return BadRequest(new { success = false, message = "Valid HostelId is required" });
+
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
                 return BadRequest(new { success = false, message = "User with this email already exists" });
@@ -103,24 +107,29 @@ public class AuthController : ControllerBase
                 UserName = request.Email,
                 Email = request.Email,
                 FullName = request.FullName,
-                HostelId = request.HostelId
+                HostelId = request.HostelId,
+                EmailConfirmed = true
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
+            {
+                _logger.LogError("Registration failed for {Email}: {Errors}", request.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
                 return BadRequest(new { success = false, errors = result.Errors.Select(e => e.Description) });
+            }
 
             // Assign default role
             await _userManager.AddToRoleAsync(user, "Student");
 
+            _logger.LogInformation("User registered successfully: {Email}", request.Email);
             return CreatedAtAction(nameof(Register), new { id = user.Id },
                 new { success = true, message = "User registered successfully", userId = user.Id });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during registration");
+            _logger.LogError(ex, "Error during registration for {Email}", request?.Email);
             return StatusCode(StatusCodes.Status500InternalServerError,
-                new { success = false, message = "Registration failed" });
+                new { success = false, message = "Registration failed: " + ex.Message });
         }
     }
 

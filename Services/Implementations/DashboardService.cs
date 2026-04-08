@@ -13,7 +13,6 @@ public class DashboardService : IDashboardService
     private readonly ApplicationDbContext _context;
     private readonly ICacheService _cacheService;
     private readonly IComplaintService _complaintService;
-    private readonly ICleaningService _cleaningService;
     private readonly IFeeService _feeService;
     private readonly IRoomService _roomService;
     private const string DASHBOARD_CACHE_KEY = "dashboard_";
@@ -22,14 +21,12 @@ public class DashboardService : IDashboardService
         ApplicationDbContext context,
         ICacheService cacheService,
         IComplaintService complaintService,
-        ICleaningService cleaningService,
         IFeeService feeService,
         IRoomService roomService)
     {
         _context = context;
         _cacheService = cacheService;
         _complaintService = complaintService;
-        _cleaningService = cleaningService;
         _feeService = feeService;
         _roomService = roomService;
     }
@@ -51,14 +48,6 @@ public class DashboardService : IDashboardService
             : 0;
 
         summary.PendingComplaints = await _complaintService.GetPendingComplaintsCountAsync(hostelId);
-        summary.PendingCleaningRooms = await _cleaningService.GetPendingCleaningCountAsync(hostelId);
-
-        var today = DateTime.UtcNow.Date;
-        summary.CleanedRoomsToday = await _context.CleaningRecords
-            .CountAsync(c => c.Room.HostelId == hostelId && 
-                            c.Date.Date == today && 
-                            c.Status == "Cleaned" && 
-                            !c.IsDeleted);
 
         summary.TotalPendingFees = await _feeService.GetTotalPendingFeesAsync(hostelId);
         summary.TotalFeesCollected = await _feeService.GetTotalFeesCollectedAsync(hostelId);
@@ -110,11 +99,6 @@ public class DashboardService : IDashboardService
                             !f.IsDeleted);
         if (overdueCount > 0)
             alerts.Add($"💰 {overdueCount} overdue fee(s)");
-
-        // Check for pending cleaning rooms
-        var pendingCleaning = await _cleaningService.GetPendingCleaningCountAsync(hostelId);
-        if (pendingCleaning > 0)
-            alerts.Add($"🧹 {pendingCleaning} room(s) pending cleaning");
 
         return alerts;
     }

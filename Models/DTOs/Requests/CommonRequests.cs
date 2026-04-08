@@ -41,15 +41,6 @@ public class CreateUpdateRoomRequest
     public int Capacity { get; set; }
 }
 
-public class CreateCleaningRecordRequest
-{
-    [Required]
-    public int RoomId { get; set; }
-
-    [Required]
-    public int WorkerId { get; set; }
-}
-
 public class LoginRequest
 {
     [Required]
@@ -76,7 +67,7 @@ public class RegisterRequest
     public string FullName { get; set; } = string.Empty;
 
     [Required]
-    public int HostelId { get; set; }
+    public int HostelId { get; set; } = 1; // Default to first hostel
 }
 
 public class ChangePasswordRequest
@@ -128,18 +119,6 @@ public class UpdateComplaintStatusRequest
 
     [StringLength(500)]
     public string? Resolution { get; set; }
-}
-
-public class UpdateCleaningStatusRequest
-{
-    [Required]
-    [StringLength(50)]
-    public string Status { get; set; } = string.Empty;
-
-    [StringLength(500)]
-    public string? Remarks { get; set; }
-
-    public int? WorkerId { get; set; }
 }
 
 public class RecordPaymentRequest

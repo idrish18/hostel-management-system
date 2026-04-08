@@ -39,9 +39,6 @@ public static class DatabaseSeeder
             // ============= SEED STUDENTS =============
             await SeedStudentsAsync(context, logger);
             
-            // ============= SEED CLEANING RECORDS =============
-            await SeedCleaningRecordsAsync(context, logger);
-            
             // ============= SEED COMPLAINTS =============
             await SeedComplaintsAsync(context, logger);
             
@@ -244,37 +241,6 @@ public static class DatabaseSeeder
         logger.LogInformation("Seeded {Count} students", students.Count);
     }
     
-    private static async Task SeedCleaningRecordsAsync(
-        ApplicationDbContext context,
-        ILogger<ApplicationDbContext> logger)
-    {
-        if (context.CleaningRecords.Any(c => c.Date.Date == DateTime.UtcNow.Date))
-            return;
-        
-        var rooms = await context.Rooms.ToListAsync();
-        var workers = await context.Workers.ToListAsync();
-        var today = DateTime.UtcNow.Date;
-        
-        var records = new List<CleaningRecord>();
-        
-        foreach (var (room, index) in rooms.Select((r, i) => (r, i)))
-        {
-            var worker = workers.FirstOrDefault(w => w.HostelId == room.HostelId);
-            
-            records.Add(new CleaningRecord
-            {
-                RoomId = room.RoomId,
-                WorkerId = worker?.WorkerId,
-                Date = today,
-                Status = index % 3 == 0 ? "Cleaned" : "Pending",
-                CleanedAt = index % 3 == 0 ? DateTime.UtcNow : null
-            });
-        }
-        
-        context.CleaningRecords.AddRange(records);
-        await context.SaveChangesAsync();
-        logger.LogInformation("Seeded {Count} cleaning records for today", records.Count);
-    }
     
     private static async Task SeedComplaintsAsync(
         ApplicationDbContext context,

@@ -33,5 +33,4 @@ public class Room
     // Navigation properties
     public virtual Hostel? Hostel { get; set; }
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
-    public virtual ICollection<CleaningRecord> CleaningRecords { get; set; } = new List<CleaningRecord>();
 }

@@ -20,7 +20,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Complaint> Complaints => Set<Complaint>();
     public DbSet<Fee> Fees => Set<Fee>();
     public DbSet<Worker> Workers => Set<Worker>();
-    public DbSet<CleaningRecord> CleaningRecords => Set<CleaningRecord>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -194,30 +193,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             
             // Indexes
             entity.HasIndex(e => new { e.HostelId, e.Department });
-        });
-        
-        // ============= CLEANING RECORD CONFIGURATION =============
-        modelBuilder.Entity<CleaningRecord>(entity =>
-        {
-            entity.HasKey(e => e.RecordId);
-            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
-            
-            // Global query filter for soft delete
-            entity.HasQueryFilter(e => !e.IsDeleted);
-            
-            // Foreign keys
-            entity.HasOne(e => e.Room)
-                .WithMany(r => r.CleaningRecords)
-                .HasForeignKey(e => e.RoomId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            entity.HasOne(e => e.Worker)
-                .WithMany(w => w.CleaningRecords)
-                .HasForeignKey(e => e.WorkerId)
-                .OnDelete(DeleteBehavior.SetNull);
-            
-            // Composite index for daily reports
-            entity.HasIndex(e => new { e.RoomId, e.Date });
         });
     }
 }
